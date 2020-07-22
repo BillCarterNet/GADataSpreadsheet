@@ -1,0 +1,97 @@
+<p>Choose a google account</p>
+<select id="accounts">
+    <option>...loading...</option>
+</select>
+
+<p>Choose a profile</p>
+<select id="profiles">
+    <option></option>
+</select>
+
+<p>Choose a view</p>
+<select id="views">
+    <option></option>
+</select>
+
+
+<p style="display: none" id="outputLog"></p>
+<script
+src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+</script>
+<script>
+// The code in this function runs when the page is loaded.
+$(function() {
+  google.script.run.withSuccessHandler(showAccounts).getAccountsData();
+});
+
+function clickSubmit() {
+   google.script.run.updateAccountInfo();
+}
+
+function outputLog(text) {
+  var myOut = $('#outputLog');
+  myOut.html(myOut.html() + "<br />" + text);
+}
+
+function applyLoading(dropdown) {
+   dropdown.empty();
+   dropdown.append('<option value="">...loading...</option>');
+   //dropdown.off("change", onSelect);
+}
+
+function applyData(dropdown, data, onSelect) {
+   dropdown.empty();
+   dropdown.append('<option value="">Please select...</option>');
+   data.forEach(function(x) {
+      dropdown.append('<option value="' + x.value + '">' + x.text + '</option>');
+   });
+   dropdown.on("change", onSelect);
+}
+
+function showViews(views) {
+  var list = $('#views');
+  applyData(list, views, function() {
+      outputLog("Change:" + $(this).val());
+      var account = $('#accounts').val();
+      var profile = $('#profiles').val();
+      var view = $(this).val();
+      var viewName = $("#views option:selected").text();
+      if(account && profile && view) {
+          google.script.run.updateAccountInfo(account,profile,view,viewName);
+          google.script.host.close()
+      }
+      /*if(result) {
+          google.script.run.withSuccessHandler(showViews).getViews(account,profile);
+      }*/
+  });
+}
+
+function showProfiles(profiles) {
+  var list = $('#profiles');
+  applyData(list, profiles, function() {
+      applyLoading($('#views'));
+      outputLog("Change:" + $(this).val());
+      var account = $('#accounts').val();
+      var profile = $(this).val();
+      var profileName = $("#profiles option:selected").text();
+      if(account && profile) {
+          google.script.run.withSuccessHandler(showViews).getViews(account,profile,profileName);
+      }
+  });
+}
+
+function showAccounts(accounts) {
+  
+  var list = $('#accounts');
+  applyData(list, accounts, function() {
+      applyLoading($('#profiles'));
+      outputLog("Change:" + $(this).val());
+      var accountId = $(this).val();
+      var accountName = $("#accounts option:selected").text();
+      
+      if(accountId && accountName) {
+          google.script.run.withSuccessHandler(showProfiles).getProfiles(accountId,accountName);
+      }
+  });
+}
+</script>
